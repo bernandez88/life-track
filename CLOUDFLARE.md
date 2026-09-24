@@ -30,11 +30,13 @@ No ejecutes migraciones remotas desde cada Pull Request. Revisa primero el SQL y
 
 ## 3. Secretos
 
-Configura el token privado de la API directamente en Cloudflare:
+Configura el token privado de la API como **Secret**, no como una variable `vars` visible:
 
 ```bash
 npx wrangler secret put API_AUTH_TOKEN
 ```
+
+Si lo configuras desde el dashboard, selecciona el tipo **Secret**. No lo agregues como Variable de texto plano.
 
 Los archivos `.env` y `.dev.vars` son solo locales y están excluidos de Git. Nunca agregues tokens reales a `wrangler.jsonc`, al repositorio ni a los logs.
 

@@ -2,8 +2,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "life-track-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-09-23",
+  "compatibility_date": "2026-09-24",
   "compatibility_flags": ["nodejs_compat"],
+  "preview_urls": false,
   "observability": {
     "enabled": true
   },
