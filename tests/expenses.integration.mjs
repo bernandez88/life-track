@@ -15,11 +15,17 @@ if (!token) {
   throw new Error("Missing API_AUTH_TOKEN in the environment or .dev.vars");
 }
 
-const command = "npx wrangler dev --local --port 8787 --ip 127.0.0.1";
-const executable = process.platform === "win32" ? process.env.ComSpec : "npx";
-const args = process.platform === "win32" ? ["/d", "/s", "/c", command] : ["wrangler", "dev", "--local", "--port", String(port), "--ip", "127.0.0.1"];
-const worker = spawn(executable, args, {
+const worker = spawn(process.execPath, [
+  "node_modules/wrangler/bin/wrangler.js",
+  "dev",
+  "--local",
+  "--port",
+  String(port),
+  "--ip",
+  "127.0.0.1",
+], {
   stdio: ["ignore", "pipe", "pipe"],
+  detached: process.platform !== "win32",
 });
 
 worker.stdout.pipe(process.stdout);
@@ -29,7 +35,11 @@ const stopWorker = () => {
   if (process.platform === "win32") {
     spawnSync("taskkill", ["/pid", String(worker.pid), "/t", "/f"], { stdio: "ignore" });
   } else {
-    worker.kill();
+    try {
+      process.kill(-worker.pid, "SIGTERM");
+    } catch {
+      worker.kill();
+    }
   }
 };
 process.on("exit", stopWorker);
