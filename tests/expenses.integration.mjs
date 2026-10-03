@@ -1,16 +1,18 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
 
 const port = 8787;
 const baseUrl = `http://127.0.0.1:${port}`;
-const token = readFileSync(".dev.vars", "utf8")
-  .split(/\r?\n/)
-  .find((line) => line.startsWith("API_AUTH_TOKEN="))
-  ?.slice("API_AUTH_TOKEN=".length)
-  .trim();
+const token = process.env.API_AUTH_TOKEN ?? (existsSync(".dev.vars")
+  ? readFileSync(".dev.vars", "utf8")
+      .split(/\r?\n/)
+      .find((line) => line.startsWith("API_AUTH_TOKEN="))
+      ?.slice("API_AUTH_TOKEN=".length)
+      .trim()
+  : undefined);
 
 if (!token) {
-  throw new Error("Missing API_AUTH_TOKEN in .dev.vars");
+  throw new Error("Missing API_AUTH_TOKEN in the environment or .dev.vars");
 }
 
 const command = "npx wrangler dev --local --port 8787 --ip 127.0.0.1";

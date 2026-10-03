@@ -4,13 +4,8 @@ import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-if (!existsSync(".dev.vars")) {
-  console.error("Missing .dev.vars. Copy .dev.vars.example and set API_AUTH_TOKEN first.");
-  process.exit(1);
-}
-
 const vars = Object.fromEntries(
-  readFileSync(".dev.vars", "utf8")
+  (existsSync(".dev.vars") ? readFileSync(".dev.vars", "utf8") : "")
     .split(/\r?\n/)
     .filter((line) => line && !line.trim().startsWith("#") && line.includes("="))
     .map((line) => {
@@ -19,9 +14,9 @@ const vars = Object.fromEntries(
     }),
 );
 
-const token = vars.API_AUTH_TOKEN;
+const token = process.env.API_AUTH_TOKEN ?? vars.API_AUTH_TOKEN;
 if (!token || token === "replace-me-locally") {
-  console.error("Set a real local API_AUTH_TOKEN in .dev.vars before seeding.");
+  console.error("Set API_AUTH_TOKEN in the environment or in .dev.vars before seeding.");
   process.exit(1);
 }
 
