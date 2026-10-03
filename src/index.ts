@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { authMiddleware } from "./middleware/auth";
+import { expenseRoutes } from "./modules/expenses/expense.routes";
+import { errorHandler } from "./shared/error-handler";
 import type { AppEnv } from "./types";
 
 const health = (c: { json: (body: unknown) => Response }) =>
@@ -11,8 +13,10 @@ const health = (c: { json: (body: unknown) => Response }) =>
 
 const api = new Hono<AppEnv>();
 api.get("/health", health);
+api.route("/expenses", expenseRoutes);
 
 const app = new Hono<AppEnv>();
+app.onError(errorHandler);
 app.use("/api/v1/*", async (c, next) => {
   if (c.req.path === "/api/v1/health") {
     return next();
