@@ -1,16 +1,26 @@
 import { Hono } from "hono";
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { authMiddleware } from "../src/middleware/auth";
-import type { AppBindings } from "../src/types";
+import type { AppEnv } from "../src/types";
 
 const createProtectedApp = () => {
-  const app = new Hono<{ Bindings: AppBindings }>();
+  const app = new Hono<AppEnv>();
   app.use("*", authMiddleware);
   app.get("/protected", (c) => c.json({ status: "authorized" }));
   return app;
 };
 
-const env = { API_AUTH_TOKEN: "local-test-token" } as AppBindings;
+const expectedHash = createHash("sha256").update("local-test-token").digest("hex");
+const env = {
+  DB: {
+    prepare: () => ({
+      bind: (hash: string) => ({
+        first: async () => hash === expectedHash ? { user_id: "user-1" } : null,
+      }),
+    }),
+  },
+} as unknown as AppEnv["Bindings"];
 
 describe("Bearer token authentication", () => {
   it("rejects requests without a token", async () => {

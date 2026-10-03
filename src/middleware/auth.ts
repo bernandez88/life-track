@@ -1,19 +1,31 @@
 import { createMiddleware } from "hono/factory";
-import type { AppBindings } from "../types";
+import { createHash } from "node:crypto";
+import type { AppEnv } from "../types";
 
-export const authMiddleware = createMiddleware<{ Bindings: AppBindings }>(
+const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+export const authMiddleware = createMiddleware<AppEnv>(
   async (c, next) => {
     const authorization = c.req.header("Authorization");
-    const configuredToken = c.env.API_AUTH_TOKEN;
 
-    if (!configuredToken || !authorization?.startsWith("Bearer ")) {
+    if (!authorization?.startsWith("Bearer ")) {
       return c.json({ error: "unauthorized" }, 401);
     }
 
     const providedToken = authorization.slice("Bearer ".length).trim();
-    if (!providedToken || providedToken !== configuredToken) {
+    if (!providedToken) {
       return c.json({ error: "unauthorized" }, 401);
     }
+
+    const token = await c.env.DB.prepare(
+      "SELECT user_id FROM api_tokens WHERE token_hash = ?1 AND revoked_at IS NULL",
+    ).bind(hashToken(providedToken)).first<{ user_id: string }>();
+
+    if (!token) {
+      return c.json({ error: "unauthorized" }, 401);
+    }
+
+    c.set("userId", token.user_id);
 
     await next();
   },

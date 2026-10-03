@@ -30,13 +30,14 @@ No ejecutes migraciones remotas desde cada Pull Request. Revisa primero el SQL y
 
 ## 3. Secretos
 
-Configura el token privado de la API como **Secret**, no como una variable `vars` visible:
+Para el desarrollo local, el token del usuario se define en `.dev.vars` y se almacena hasheado en D1:
 
 ```bash
-npx wrangler secret put API_AUTH_TOKEN
+Copy-Item .dev.vars.example .dev.vars
+npm run db:seed:local
 ```
 
-Si lo configuras desde el dashboard, selecciona el tipo **Secret**. No lo agregues como Variable de texto plano.
+El token real nunca se guarda en el repositorio ni en la base de datos.
 
 Las rutas bajo `/api/v1` requieren este encabezado:
 

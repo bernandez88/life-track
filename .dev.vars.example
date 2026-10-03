@@ -1,2 +1,3 @@
-# Copy to .dev.vars for local Wrangler/Vitest runs. Never commit the copied file.
+# Used by db:seed:local to create or rotate the local user's token.
+# Never commit the copied .dev.vars file.
 API_AUTH_TOKEN=replace-me-locally

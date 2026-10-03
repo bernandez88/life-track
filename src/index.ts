@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { authMiddleware } from "./middleware/auth";
-import type { AppBindings } from "./types";
+import type { AppEnv } from "./types";
 
 const health = (c: { json: (body: unknown) => Response }) =>
   c.json({
@@ -9,10 +9,10 @@ const health = (c: { json: (body: unknown) => Response }) =>
     timestamp: new Date().toISOString(),
   });
 
-const api = new Hono<{ Bindings: AppBindings }>();
+const api = new Hono<AppEnv>();
 api.get("/health", health);
 
-const app = new Hono<{ Bindings: AppBindings }>();
+const app = new Hono<AppEnv>();
 app.use("/api/v1/*", async (c, next) => {
   if (c.req.path === "/api/v1/health") {
     return next();

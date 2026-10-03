@@ -1,4 +1,12 @@
 export type AppBindings = {
   DB: D1Database;
-  API_AUTH_TOKEN: string;
+};
+
+export type AppVariables = {
+  userId: string;
+};
+
+export type AppEnv = {
+  Bindings: AppBindings;
+  Variables: AppVariables;
 };

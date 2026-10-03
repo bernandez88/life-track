@@ -2,7 +2,7 @@
 
 ## 1. Idea del proyecto
 
-Aplicación personal para capturar, organizar, consultar y exportar información cotidiana desde un único lugar. El alcance inicial incluye gastos, ejercicios, actividades y notas. El proyecto comienza como una API privada, sin frontend ni dominio propio, y podrá incorporar una interfaz web más adelante sin reemplazar el backend ni la base de datos.
+Aplicación personal multiusuario para capturar, organizar, consultar y exportar información cotidiana desde un único lugar. El alcance inicial incluye gastos, ejercicios, actividades y notas. El proyecto comienza como una API privada, sin frontend propio ni dominio personalizado, consumible por scripts y agentes de IA, y podrá incorporar un MCP o una interfaz web más adelante sin reemplazar el backend ni la base de datos.
 
 ## 2. Objetivos
 
@@ -56,24 +56,41 @@ Postman / scripts / cliente futuro
 
 Las siguientes entidades son una propuesta base; los campos definitivos se ajustarán durante la implementación.
 
+### `users` y `api_tokens`
+
+- Cada usuario tendrá un identificador estable y un token personal.
+- Los tokens se almacenarán únicamente como hashes y podrán revocarse.
+- En el MVP se mantendrá un token activo por usuario.
+
+### `expense_categories`
+
+- `id`, `user_id`, `name`, `active`, `created_at`, `updated_at`.
+- Cada usuario tendrá su propio catálogo de categorías.
+
+### `activity_types`
+
+- `id`, `user_id`, `name`, `active`, `created_at`, `updated_at`.
+- Cada usuario tendrá su propio catálogo de tipos de actividad.
+
 ### `expenses`
 
-- `id`, `occurred_at`, `amount`, `currency`, `category`, `description`, `created_at`, `updated_at`.
-- El monto se almacenará como entero en la unidad monetaria mínima (por ejemplo, centavos) para evitar errores de punto flotante.
+- `id`, `user_id`, `occurred_at`, `amount`, `currency`, `category_id`, `description`, `created_at`, `updated_at`.
+- `amount` se almacenará como entero en la unidad monetaria mínima; por ejemplo, `$25.05` será `2505`.
+- `currency` tendrá `USD` como valor predeterminado.
 
 ### `workouts`
 
-- `id`, `performed_at`, `exercise`, `sets`, `repetitions`, `weight`, `notes`, `created_at`, `updated_at`.
+- `id`, `user_id`, `performed_at`, `exercise`, `sets`, `repetitions`, `weight`, `notes`, `created_at`, `updated_at`.
 - El modelo podrá evolucionar a sesiones con múltiples ejercicios si el uso lo requiere.
 
 ### `activities`
 
-- `id`, `occurred_at`, `type`, `duration_minutes`, `description`, `created_at`, `updated_at`.
+- `id`, `user_id`, `occurred_at`, `activity_type_id`, `duration_minutes`, `description`, `created_at`, `updated_at`.
 
 ### `notes`
 
-- `id`, `title`, `content`, `tags`, `created_at`, `updated_at`.
-- Las etiquetas podrán empezar como un campo simple y normalizarse después si hace falta.
+- `id`, `user_id`, `title`, `content`, `created_at`, `updated_at`.
+- Las etiquetas se normalizarán en `tags` y `note_tags` para facilitar filtros.
 
 **Convenciones:** identificadores estables; fechas de creación y actualización en UTC; fechas de ocurrencia explícitas para registros históricos; validación de campos requeridos y límites de longitud.
 
@@ -94,7 +111,8 @@ Las listas admitirán paginación y filtros relevantes. Las respuestas usarán J
 ## 7. Seguridad y privacidad
 
 - La API será privada: ninguna operación sobre datos personales quedará expuesta sin autenticación.
-- Para el MVP se definirá un mecanismo de autenticación personal antes de publicar endpoints de datos. No se guardarán secretos en el repositorio.
+- Cada usuario tendrá un token personal; el middleware resolverá el `user_id` antes de ejecutar operaciones.
+- Todas las consultas sobre datos personales filtrarán por `user_id`.
 - Las credenciales y configuraciones sensibles se gestionarán mediante secretos del entorno.
 - Se validarán entradas y se limitará el acceso a los recursos del propietario.
 - El acceso se realizará exclusivamente mediante HTTPS.
@@ -143,8 +161,8 @@ Esta estructura es orientativa; cada módulo podrá separar rutas, validaciones,
 
 Estas decisiones no bloquean la definición base, pero deben resolverse antes o durante la implementación:
 
-- **Autenticación:** token personal para scripts/Postman o inicio de sesión interactivo si se agrega frontend.
-- **Modelo de ejercicios:** registro simple por ejercicio o sesiones que agrupen varios ejercicios.
+- **Autenticación:** token personal por usuario para scripts, agentes y MCP; OAuth queda como evolución futura si se agrega frontend.
+- **Modelo de ejercicios:** registro simple por ejercicio; cada fecha representa una sesión implícita.
 - **Moneda:** una moneda predeterminada o soporte de múltiples monedas.
 - **Captura de actividades:** actividades generales, tareas con estado o seguimiento de hábitos; precisar el alcance.
 - **Notas:** texto plano o Markdown; definir si se requieren adjuntos.

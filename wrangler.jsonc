@@ -16,6 +16,6 @@
     }
   ],
   "secrets": {
-    "required": ["API_AUTH_TOKEN"]
+    "required": []
   }
 }

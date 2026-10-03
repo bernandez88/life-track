@@ -15,7 +15,8 @@
     "db:migration:create": "wrangler d1 migrations create life-track-db",
     "db:migrations:list": "wrangler d1 migrations list life-track-db --remote",
     "db:migrate:local": "wrangler d1 migrations apply life-track-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply life-track-db --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply life-track-db --remote",
+    "db:seed:local": "node scripts/seed-local.mjs"
   },
   "dependencies": {
     "hono": "^4.13.9"
