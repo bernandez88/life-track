@@ -24,7 +24,7 @@ describe("health endpoint", () => {
   });
 
   it("returns a consistent JSON 404 for unknown routes", async () => {
-    const response = await worker.default.fetch(new Request("https://life-track.test/api/v1/unknown"));
+    const response = await worker.default.fetch(new Request("https://life-track.test/unknown"));
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ error: "not_found" });

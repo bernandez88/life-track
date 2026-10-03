@@ -1,9 +1,6 @@
 import { Hono } from "hono";
-
-type Bindings = {
-  DB: D1Database;
-  API_AUTH_TOKEN: string;
-};
+import { authMiddleware } from "./middleware/auth";
+import type { AppBindings } from "./types";
 
 const health = (c: { json: (body: unknown) => Response }) =>
   c.json({
@@ -12,10 +9,17 @@ const health = (c: { json: (body: unknown) => Response }) =>
     timestamp: new Date().toISOString(),
   });
 
-const api = new Hono<{ Bindings: Bindings }>();
+const api = new Hono<{ Bindings: AppBindings }>();
 api.get("/health", health);
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<{ Bindings: AppBindings }>();
+app.use("/api/v1/*", async (c, next) => {
+  if (c.req.path === "/api/v1/health") {
+    return next();
+  }
+
+  return authMiddleware(c, next);
+});
 app.get("/health", health);
 app.route("/api/v1", api);
 

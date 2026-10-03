@@ -38,6 +38,27 @@ npx wrangler secret put API_AUTH_TOKEN
 
 Si lo configuras desde el dashboard, selecciona el tipo **Secret**. No lo agregues como Variable de texto plano.
 
+Las rutas bajo `/api/v1` requieren este encabezado:
+
+```http
+Authorization: Bearer <API_AUTH_TOKEN>
+```
+
+`/health` y `/api/v1/health` permanecen públicos para comprobaciones de disponibilidad.
+
+Para trabajar localmente, crea el archivo `.dev.vars` a partir del ejemplo y define un token exclusivo para desarrollo:
+
+```powershell
+Copy-Item .dev.vars.example .dev.vars
+npm run dev
+```
+
+Puedes probar una ruta protegida cuando exista un recurso implementado con:
+
+```bash
+curl -H "Authorization: Bearer <API_AUTH_TOKEN>" http://localhost:8787/api/v1/<recurso>
+```
+
 Los archivos `.env` y `.dev.vars` son solo locales y están excluidos de Git. Nunca agregues tokens reales a `wrangler.jsonc`, al repositorio ni a los logs.
 
 ## 4. GitHub Actions
