@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { backupD1ToR2 } from "./backups/d1-backup";
 import { authMiddleware } from "./middleware/auth";
 import { activityRoutes } from "./modules/activities/activity.routes";
 import { createCatalogRoutes } from "./modules/catalogs/catalog.routes";
@@ -6,7 +7,7 @@ import { expenseRoutes } from "./modules/expenses/expense.routes";
 import { noteRoutes } from "./modules/notes/note.routes";
 import { workoutRoutes } from "./modules/workouts/workout.routes";
 import { errorHandler } from "./shared/error-handler";
-import type { AppEnv } from "./types";
+import type { AppBindings, AppEnv } from "./types";
 
 const health = (c: { json: (body: unknown) => Response }) =>
   c.json({
@@ -39,3 +40,7 @@ app.route("/api/v1", api);
 app.notFound((c) => c.json({ error: "not_found" }, 404));
 
 export default app;
+
+export const scheduled: ExportedHandlerScheduledHandler<AppBindings> = async (_controller, env) => {
+  await backupD1ToR2(env.DB, env.BACKUPS);
+};

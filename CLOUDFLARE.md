@@ -90,3 +90,17 @@ Cloudflare ofrece servidores MCP remotos. Para Codex/agentes, registra estos end
 ```
 
 Usa OAuth para sesiones interactivas. Para automatizaciones no interactivas, usa un API Token Bearer de alcance mínimo. El MCP no se conecta desde el Worker ni recibe permisos sobre la aplicación en runtime.
+
+## 6. Respaldos diarios en R2
+
+El Worker genera un respaldo JSON de las tablas de D1 cada día a las 06:00 UTC, equivalente a medianoche en El Salvador. Los archivos se guardan como `backups/d1-YYYY-MM-DD.json` en el bucket `life-track-backups`.
+
+El proceso conserva únicamente los cinco respaldos más recientes y elimina los anteriores. El respaldo contiene los datos de las tablas de la aplicación, incluido el hash de los tokens, nunca el token original.
+
+Para habilitarlo, R2 debe estar activado en la cuenta de Cloudflare y debe existir el bucket configurado en `wrangler.jsonc`:
+
+```bash
+npx wrangler r2 bucket create life-track-backups
+```
+
+Después de crear el bucket, un despliegue del Worker activará el Cron Trigger.
