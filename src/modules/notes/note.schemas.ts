@@ -1,0 +1,10 @@
+import { z } from "zod";
+import { pagination, withAtLeastOneField } from "../../shared/validation";
+const tags = z.array(z.string().trim().min(1).max(50)).max(20).optional();
+const base = { title: z.string().trim().min(1).max(200), content: z.string().max(20000), tags };
+export const createNoteSchema = z.object(base);
+export const updateNoteSchema = withAtLeastOneField(z.object(base));
+export const listNotesSchema = z.object({ search: z.string().trim().min(1).max(100).optional(), tag: z.string().trim().min(1).max(50).optional(), ...pagination });
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+export type ListNotesInput = z.infer<typeof listNotesSchema>;

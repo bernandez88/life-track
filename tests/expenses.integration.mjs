@@ -118,6 +118,54 @@ try {
     throw new Error("Unauthenticated request was not rejected");
   }
 
+  const activityResponse = await fetch(`${baseUrl}/api/v1/activities`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      occurred_at: "2026-10-02",
+      activity_type_id: "local-user-activity-trabajo",
+      duration_minutes: 30,
+      description: "Integration test activity",
+    }),
+  });
+  if (activityResponse.status !== 201) throw new Error(`Create activity failed with ${activityResponse.status}: ${await activityResponse.text()}`);
+  const activity = await activityResponse.json();
+
+  const workoutResponse = await fetch(`${baseUrl}/api/v1/workouts`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ performed_at: "2026-10-02", exercise: "Squat", sets: 3, repetitions: 10, weight: 50 }),
+  });
+  if (workoutResponse.status !== 201) throw new Error(`Create workout failed with ${workoutResponse.status}: ${await workoutResponse.text()}`);
+  const workout = await workoutResponse.json();
+
+  const noteResponse = await fetch(`${baseUrl}/api/v1/notes`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ title: "Integration note", content: "Local note", tags: ["test", "local"] }),
+  });
+  if (noteResponse.status !== 201) throw new Error(`Create note failed with ${noteResponse.status}: ${await noteResponse.text()}`);
+  const note = await noteResponse.json();
+  const taggedNotesResponse = await fetch(`${baseUrl}/api/v1/notes?tag=test`, { headers });
+  if (taggedNotesResponse.status !== 200 || !(await taggedNotesResponse.json()).data.some((item) => item.id === note.data.id)) throw new Error("Note tag filter failed");
+
+  const catalogResponse = await fetch(`${baseUrl}/api/v1/activity-types`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: "Integration type" }),
+  });
+  if (catalogResponse.status !== 201) throw new Error(`Create activity type failed with ${catalogResponse.status}: ${await catalogResponse.text()}`);
+  const catalog = await catalogResponse.json();
+  const catalogUpdateResponse = await fetch(`${baseUrl}/api/v1/activity-types/${catalog.data.id}`, { method: "PATCH", headers, body: JSON.stringify({ active: false }) });
+  if (catalogUpdateResponse.status !== 200) throw new Error("Update activity type failed");
+
+  for (const [path, id] of [["activities", activity.data.id], ["workouts", workout.data.id], ["notes", note.data.id]]) {
+    const response = await fetch(`${baseUrl}/api/v1/${path}/${id}`, { method: "DELETE", headers });
+    if (response.status !== 200) throw new Error(`Delete ${path} failed with ${response.status}`);
+  }
+  const catalogDeleteResponse = await fetch(`${baseUrl}/api/v1/activity-types/${catalog.data.id}`, { method: "DELETE", headers });
+  if (catalogDeleteResponse.status !== 200) throw new Error("Delete activity type failed");
+
   console.log("Integration test passed: expenses CRUD and authentication");
 } finally {
   stopWorker();

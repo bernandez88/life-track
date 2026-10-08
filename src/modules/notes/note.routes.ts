@@ -1,0 +1,12 @@
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import type { AppEnv } from "../../types";
+import { NoteRepository } from "./note.repository";
+import { createNoteSchema, listNotesSchema, updateNoteSchema } from "./note.schemas";
+import { NoteService } from "./note.service";
+export const noteRoutes=new Hono<AppEnv>();const service=(c:any)=>new NoteService(new NoteRepository(c.env.DB));
+noteRoutes.post("/",zValidator("json",createNoteSchema),async c=>c.json({data:await service(c).create(c.get("userId"),c.req.valid("json"))},201));
+noteRoutes.get("/",zValidator("query",listNotesSchema),async c=>c.json(await service(c).list(c.get("userId"),c.req.valid("query"))));
+noteRoutes.get("/:id",async c=>c.json({data:await service(c).get(c.get("userId"),c.req.param("id"))}));
+noteRoutes.patch("/:id",zValidator("json",updateNoteSchema),async c=>c.json({data:await service(c).update(c.get("userId"),c.req.param("id"),c.req.valid("json"))}));
+noteRoutes.delete("/:id",async c=>{await service(c).delete(c.get("userId"),c.req.param("id"));return c.json({data:{id:c.req.param("id")}});});

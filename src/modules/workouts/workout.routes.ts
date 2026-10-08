@@ -1,0 +1,13 @@
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import type { AppEnv } from "../../types";
+import { WorkoutRepository } from "./workout.repository";
+import { createWorkoutSchema, listWorkoutsSchema, updateWorkoutSchema } from "./workout.schemas";
+import { WorkoutService } from "./workout.service";
+export const workoutRoutes = new Hono<AppEnv>();
+const service=(c:any)=>new WorkoutService(new WorkoutRepository(c.env.DB));
+workoutRoutes.post("/",zValidator("json",createWorkoutSchema),async c=>c.json({data:await service(c).create(c.get("userId"),c.req.valid("json"))},201));
+workoutRoutes.get("/",zValidator("query",listWorkoutsSchema),async c=>c.json(await service(c).list(c.get("userId"),c.req.valid("query"))));
+workoutRoutes.get("/:id",async c=>c.json({data:await service(c).get(c.get("userId"),c.req.param("id"))}));
+workoutRoutes.patch("/:id",zValidator("json",updateWorkoutSchema),async c=>c.json({data:await service(c).update(c.get("userId"),c.req.param("id"),c.req.valid("json"))}));
+workoutRoutes.delete("/:id",async c=>{await service(c).delete(c.get("userId"),c.req.param("id"));return c.json({data:{id:c.req.param("id")}});});

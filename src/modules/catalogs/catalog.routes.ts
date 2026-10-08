@@ -1,0 +1,16 @@
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import { z } from "zod";
+import type { AppEnv } from "../../types";
+const tables={expenseCategories:"expense_categories",activityTypes:"activity_types"} as const;
+type CatalogTable=keyof typeof tables;
+const createSchema=z.object({name:z.string().trim().min(1).max(100)});
+const updateSchema=z.object({name:z.string().trim().min(1).max(100).optional(),active:z.boolean().optional()}).refine(value=>Object.keys(value).length>0,"at least one field is required");
+const listSchema=z.object({active:z.enum(["true","false"]).optional()});
+const table=(kind:CatalogTable)=>tables[kind];
+export const createCatalogRoutes=(kind:CatalogTable)=>{const routes=new Hono<AppEnv>();const tableName=table(kind);
+routes.post("/",zValidator("json",createSchema),async c=>{const input=c.req.valid("json");const id=crypto.randomUUID();const now=new Date().toISOString();await c.env.DB.prepare(`INSERT INTO ${tableName} (id,user_id,name,active,created_at,updated_at) VALUES (?1,?2,?3,1,?4,?4)`).bind(id,c.get("userId"),input.name,now).run();const data=await c.env.DB.prepare(`SELECT id,name,active,created_at,updated_at FROM ${tableName} WHERE id=?1 AND user_id=?2`).bind(id,c.get("userId")).first();return c.json({data},201);});
+routes.get("/",zValidator("query",listSchema),async c=>{const active=c.req.valid("query").active;const values:unknown[]=[c.get("userId")];const where=["user_id=?1"];if(active!==undefined){where.push("active=?2");values.push(active==="true"?1:0);}const data=(await c.env.DB.prepare(`SELECT id,name,active,created_at,updated_at FROM ${tableName} WHERE ${where.join(" AND ")} ORDER BY name`).bind(...values).all()).results;return c.json({data});});
+routes.get("/:id",async c=>{const data=await c.env.DB.prepare(`SELECT id,name,active,created_at,updated_at FROM ${tableName} WHERE id=?1 AND user_id=?2`).bind(c.req.param("id"),c.get("userId")).first();if(!data)return c.json({error:"not_found",message:"Catalog item not found"},404);return c.json({data});});
+routes.patch("/:id",zValidator("json",updateSchema),async c=>{const input=c.req.valid("json");const current=await c.env.DB.prepare(`SELECT id,name,active,created_at,updated_at FROM ${tableName} WHERE id=?1 AND user_id=?2`).bind(c.req.param("id"),c.get("userId")).first<{name:string;active:number}>();if(!current)return c.json({error:"not_found",message:"Catalog item not found"},404);const data=await c.env.DB.prepare(`UPDATE ${tableName} SET name=?1,active=?2,updated_at=?3 WHERE id=?4 AND user_id=?5 RETURNING id,name,active,created_at,updated_at`).bind(input.name??current.name,input.active===undefined?current.active:input.active?1:0,new Date().toISOString(),c.req.param("id"),c.get("userId")).first();return c.json({data});});
+routes.delete("/:id",async c=>{const result=await c.env.DB.prepare(`DELETE FROM ${tableName} WHERE id=?1 AND user_id=?2`).bind(c.req.param("id"),c.get("userId")).run();if(!result.meta.changes)return c.json({error:"not_found",message:"Catalog item not found"},404);return c.json({data:{id:c.req.param("id")}});});return routes;};
