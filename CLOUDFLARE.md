@@ -104,3 +104,46 @@ npx wrangler r2 bucket create life-track-backups
 ```
 
 Después de crear el bucket, un despliegue del Worker activará el Cron Trigger.
+
+## 7. MCP de life-track
+
+El Worker también expone un MCP específico de la aplicación en:
+
+```text
+https://life-track-api.bernandez88.workers.dev/mcp
+```
+
+El endpoint usa OAuth 2.1 con Cloudflare Access. El Worker actúa como servidor OAuth para el cliente MCP y como cliente OIDC de la SaaS application `life-track-mcp`. Después de iniciar sesión, el email de Access se asocia con `users.email` y cada herramienta opera únicamente sobre los datos del usuario autenticado.
+
+Herramientas iniciales:
+
+- `list_expense_categories` y `list_activity_types`
+- `list_expenses` y `create_expense`
+- `list_activities` y `create_activity`
+- `list_workouts` y `create_workout`
+- `list_notes` y `create_note`
+
+El MCP de life-track es distinto del MCP oficial de Cloudflare: el primero opera datos de la aplicación y el segundo administra infraestructura.
+
+### Secretos OAuth del Worker
+
+No guardes estos valores en GitHub ni en el repositorio. Cárgalos como secretos del Worker:
+
+```bash
+npx wrangler secret put ACCESS_CLIENT_ID
+npx wrangler secret put ACCESS_CLIENT_SECRET
+npx wrangler secret put ACCESS_TOKEN_URL
+npx wrangler secret put ACCESS_AUTHORIZATION_URL
+npx wrangler secret put ACCESS_JWKS_URL
+npx wrangler secret put COOKIE_ENCRYPTION_KEY
+```
+
+Los endpoints de Access tienen este formato:
+
+```text
+https://<TEAM_NAME>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<CLIENT_ID>/token
+https://<TEAM_NAME>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<CLIENT_ID>/authorization
+https://<TEAM_NAME>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<CLIENT_ID>/jwks
+```
+
+`COOKIE_ENCRYPTION_KEY` debe ser un valor aleatorio de al menos 32 bytes, por ejemplo generado con `openssl rand -hex 32`.

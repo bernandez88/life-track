@@ -20,8 +20,12 @@
     "db:seed:local": "node scripts/seed-local.mjs"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.2.3",
     "@hono/zod-validator": "^0.9.1",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "agents": "^0.27.0",
     "hono": "^4.13.9",
+    "jose": "^6.1.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

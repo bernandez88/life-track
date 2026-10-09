@@ -3,7 +3,7 @@
   "name": "life-track-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "preview_urls": false,
   "triggers": {
     "crons": ["0 6 * * *"]
@@ -11,6 +11,12 @@
   "observability": {
     "enabled": true
   },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "2ae545d95fae4c83bfc2269098adc2fb"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
